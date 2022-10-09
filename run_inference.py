@@ -10,14 +10,14 @@ model = Transformer(
     seq_len=24,
     n_layers=1,
     use_layer_norm=False,
-    use_smear=True,
+    use_smear=False,
 )
 
 model.eval()
 
-pattern = "ABCDEF"
+pattern = "QWERTYXYZRST"
 
-checkpoint_file = "checkpoints/one_layer_smeared_key/model_step_9984.pt"
+checkpoint_file = "checkpoints/one_layer_transformer/model_step_9984.pt"
 
 state_dict = torch.load(checkpoint_file, map_location=torch.device('cpu'))
 
@@ -48,9 +48,9 @@ def greedy_decode(string, max_length=30):
             logits = model(input).softmax(dim=-1)
     return string
 
-#print(greedy_decode(pattern, 24))
-#print((pattern*(24//6+1))[:24])
-
+print(greedy_decode(pattern, 24))
+print((pattern*(24//6+1))[:24])
+"""
 loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
 test_dataset = LetterDataset(6, 24)
 losses = []
@@ -85,9 +85,9 @@ print("Cross entropy loss:", sum(losses)/len(losses))
 # Cross entropy loss: 2.805475741624832 Loss with head 1 disabled
 # Cross entropy loss: 2.835808351635933 Loss with head 2 disabled
 # Cross entropy loss: 2.8343328833580017 Loss with head 3 disabled
-# Cross entropy loss: 2.8077731877565384
+# Cross entropy loss: 2.8077731877565384 Loss with head 4 disabled
 
-"""
+
 # Smeared key
 
 Embedding circuit copy metric: (-0.9998577+0j)   

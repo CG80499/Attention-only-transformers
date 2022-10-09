@@ -69,7 +69,6 @@ def attention(K, Q, V, mask):
     K, Q = K + positional_embeddings, Q + positional_embeddings # Added after multiplication by W_k, W_q to avoid putting positional embeddings in the residual stream. 
     scores = torch.matmul(Q, K.transpose(2, 3)) / d_k**0.5 + mask
     weights = torch.softmax(scores, dim=-1)
-    plot_attention(weights, 3) # Plot attention weights for the first head.
     return torch.matmul(weights, V)
 
 class Embedding(torch.nn.Module):
@@ -244,11 +243,11 @@ if __name__ == "__main__":
         d_model=32,
         n_heads=4,
         seq_len=24,
-        n_layers=1,
+        n_layers=2,
         use_layer_norm=False,
-        use_smear=True,
+        use_smear=False,
     )
-    folder = "checkpoints/one_layer_smeared_key"
+    folder = "checkpoints/two_layer_transformer"
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1.0)
     loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
