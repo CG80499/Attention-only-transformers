@@ -10,20 +10,18 @@ model = Transformer(
     seq_len=24,
     n_layers=1,
     use_layer_norm=False,
-    use_smear=True,
+    use_smear=False,
 )
 
 model.eval()
 
 pattern = "ABCDEF"*2
 
-checkpoint_file = "checkpoints/one_layer_smeared_query/model_step_9984.pt"
+checkpoint_file = "checkpoints/one_layer_transformer/model_step_9984.pt"
 
 state_dict = torch.load(checkpoint_file, map_location=torch.device('cpu'))
 
 #del state_dict["layers.1.norm.weight"], state_dict["layers.1.norm.bias"] # Old key names
-state_dict["layers.1.smear.alpha_values"] = state_dict["layers.1.smeared_keys.alpha_values"]
-del state_dict["layers.1.smeared_keys.alpha_values"]
 
 model.load_state_dict(state_dict)
 
@@ -41,6 +39,7 @@ def greedy_decode(string, max_length=30):
     for i in range(max_length):
         index = len(string) - 1
         next_char = logits[0][index].argmax(dim=-1).item()
+        print("Next token prob", logits[0][index])
         if next_char == 26:
             break
         string += index2alphabet[next_char]
@@ -78,18 +77,19 @@ print("Cross entropy loss:", sum(losses)/len(losses))
 # ABCDEFABCDEFBBFZBFBBDHBC With head 2
 # ABCDEFABCDEFGBFZBFBBDHDH Without head 2
 # ABCDEFABCDEFABCDEFABCDEF
-# Copy metric head 1:  (0.99999076-4.3177517e-11j)
-# Copy metric head 2:  (-0.8484091+4.2669993e-10j)
-# Copy metric head 3:  (1-1.4584884e-16j)
-# Copy metric head 4:  (0.9999595+2.8697897e-10j)
-# Embedding circuit copy metric: (-0.99885213+4.5348645e-11j)
-# All heads Cross entropy loss: 1.6893332397937775
-# Head 1 disabled Cross entropy loss: 2.1365128111839295
-# Head 2 disabled Cross entropy loss: 2.1365247917175294
-# Head 3 disabled Cross entropy loss: 2.136558632850647
-# Head 4 disabled Cross entropy loss: 2.071822009086609
-"""
+#Embedding circuit copy metric: (-0.9995849-1.2085145e-10j)
+#Head 1 Copy metric:  (0.6860927-2.1031352e-16j)
+#Head 2 Copy metric:  (0.85695416+2.0477617e-10j)
+#Head 3 Copy metric:  (0.98481447+1.7858229e-11j)
+#Head 4 Copy metric:  (0.5779195+4.070983e-11j)
 
+# Cross entropy loss: 2.6064820140600204 Loss with all heads enabled
+# Cross entropy loss: 2.805475741624832 Loss with head 1 disabled
+# Cross entropy loss: 2.835808351635933 Loss with head 2 disabled
+# Cross entropy loss: 2.8343328833580017 Loss with head 3 disabled
+# Cross entropy loss: 2.8077731877565384
+
+"""
 state_dict = model.state_dict()
 
 num_heads = 4

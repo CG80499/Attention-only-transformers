@@ -18,7 +18,7 @@ torch.manual_seed(SEED)
 random.seed(SEED)
 
 def create_sample(length, pattern_len=6):
-    pattern = "".join(random.choices(alphabet, k=pattern_len))
+    pattern = "".join([random.choice(alphabet) for _ in range(pattern_len)])
     return (pattern*(length//pattern_len+1))[:length] 
 
 def create_fixed_sample(length, pattern="ABCDEF"):
@@ -48,7 +48,7 @@ def plot_attention(weights, head_number):
     grid_data = grid_data / grid_data.max(axis=0, keepdims=True)
     #grid_data = np.clip(grid_data, 0, 1/3)
     fig, ax = plt.subplots()
-    ax.imshow(grid_data, cmap="Blues", origin="upper", vmin=0) # Old cmap="Greens"
+    ax.imshow(grid_data, cmap="Blues", origin="upper", vmin=0) 
 
     # Add grid
 
@@ -66,9 +66,8 @@ def attention(K, Q, V, mask):
     seq_len, d_k = K.shape[-2:]
     positional_embeddings = sinusoidal_embeddings(seq_len, d_k).to(K.device)
     K, Q = K + positional_embeddings, Q + positional_embeddings # Added after multiplication by W_k, W_q to avoid putting positional embeddings in the residual stream. 
-    scores = torch.matmul(Q, K.transpose(-2, -1)) / d_k**0.5 + mask
+    scores = torch.matmul(Q, K.transpose(2, 3)) / d_k**0.5 + mask
     weights = torch.softmax(scores, dim=-1)
-    plot_attention(weights, 1) # Plot attention weights for the 3rd head.
     return torch.matmul(weights, V)
 
 class Embedding(torch.nn.Module):
@@ -118,7 +117,7 @@ class Smear(torch.nn.Module):
 
 class DecoderLayer(torch.nn.Module):
     
-    def __init__(self, d_model, n_heads, seq_len, use_layer_norm=True, use_smear=False):
+    def __init__(self, d_model, n_heads, seq_len, use_layer_norm=False, use_smear=False):
         super().__init__()
         assert d_model % n_heads == 0, "d_model must be divisible by n_heads"
         self.d_k = self.dv = d_model // n_heads
@@ -146,6 +145,8 @@ class DecoderLayer(torch.nn.Module):
         Q = self.smear(Q)
         multi_head_attention = attention(K, Q, V, self.mask)
         # multi_head_attention has shape (batch_size, n_heads, seq_len, d_v)
+        multi_head_attention = multi_head_attention.transpose(1, 2).contiguous()
+        # multi_head_attention has shape (batch_size, seq_len, n_heads, d_v)
         multi_head_attention = multi_head_attention.view(-1, self.seq_len, self.d_model)
         # multi_head_attention has shape (batch_size, seq_len, d_model)
         Y = self.W_o(multi_head_attention)+X # Don't forget the residual connection!
@@ -224,7 +225,7 @@ class TestTextDataset(torch.utils.data.Dataset):
         return create_one_hot(create_fixed_sample(self.seq_len, pattern="ABCDEF"))
 
 def plot_data(train_loss, test_loss, total_steps):
-    if not len(test_loss) %  256 == 0:
+    if not len(test_loss) %  128 == 0:
         return
     #train_loss = [mean(l) for l in batch_generator(train_loss, 24)]
     _test_loss = [mean(l) for l in batch_generator(test_loss, 24)]
@@ -243,9 +244,9 @@ if __name__ == "__main__":
         seq_len=24,
         n_layers=1,
         use_layer_norm=False,
-        use_smear=True,
+        use_smear=False,
     )
-    folder = "checkpoints/one_layer_smeared_query_after_pos_embed"
+    folder = "checkpoints/one_layer_transformer"
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1.0)
     loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
@@ -279,6 +280,7 @@ if __name__ == "__main__":
         pred_logits = model(one_hot_input_train)
         # pred_logits has shape (batch_size, seq_len, n_vocab)
         n_tokens = len(alphabet)
+
         loss = loss_fn(pred_logits[:, :-1, :].reshape(-1, n_tokens), one_hot_input_train[:, 1:, :].reshape(-1, n_tokens)) 
         optimizer.zero_grad()
         loss.backward()
@@ -293,6 +295,7 @@ if __name__ == "__main__":
         loss = loss_fn(pred_logits[:, :-1, :].reshape(-1, n_tokens), one_hot_input_test[:, 1:, :].reshape(-1, n_tokens))
         per_token_loss = torch.nn.CrossEntropyLoss(reduction="none")(pred_logits[:, :-1, :].reshape(-1, n_tokens), one_hot_input_test[:, 1:, :].reshape(-1, n_tokens)).detach().reshape(-1, 23)
 
+        ICL_loss = (per_token_loss[:, -1]-per_token_loss[:, 0]).mean().item()
         test_loss.append(loss.item())
 
         training_log.add_step({
@@ -301,9 +304,6 @@ if __name__ == "__main__":
             "test_loss": test_loss[-1],
             "per_token_loss": per_token_loss.mean(dim=0).tolist(),
         })
-
-
-        #print("ICL Loss:", (per_token_loss[:, -1]-per_token_loss[:, 0]).mean().item())
 
         plot_data(train_loss, test_loss, step+1)
 
