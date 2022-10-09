@@ -10,18 +10,16 @@ model = Transformer(
     seq_len=24,
     n_layers=1,
     use_layer_norm=False,
-    use_smear=False,
+    use_smear=True,
 )
 
 model.eval()
 
-pattern = "ABCDEF"*2
+pattern = "ABCDEF"
 
-checkpoint_file = "checkpoints/one_layer_transformer/model_step_9984.pt"
+checkpoint_file = "checkpoints/one_layer_smeared_key/model_step_9984.pt"
 
 state_dict = torch.load(checkpoint_file, map_location=torch.device('cpu'))
-
-#del state_dict["layers.1.norm.weight"], state_dict["layers.1.norm.bias"] # Old key names
 
 model.load_state_dict(state_dict)
 
@@ -39,7 +37,7 @@ def greedy_decode(string, max_length=30):
     for i in range(max_length):
         index = len(string) - 1
         next_char = logits[0][index].argmax(dim=-1).item()
-        print("Next token prob", logits[0][index])
+        print("Next token prob", logits[0][index][next_char].item())
         if next_char == 26:
             break
         string += index2alphabet[next_char]
@@ -52,7 +50,6 @@ def greedy_decode(string, max_length=30):
 
 #print(greedy_decode(pattern, 24))
 #print((pattern*(24//6+1))[:24])
-
 
 loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
 test_dataset = LetterDataset(6, 24)
@@ -82,6 +79,7 @@ print("Cross entropy loss:", sum(losses)/len(losses))
 #Head 2 Copy metric:  (0.85695416+2.0477617e-10j)
 #Head 3 Copy metric:  (0.98481447+1.7858229e-11j)
 #Head 4 Copy metric:  (0.5779195+4.070983e-11j)
+# All heads added together:  Copy metric:  (0.9997909-4.1352373e-11j)
 
 # Cross entropy loss: 2.6064820140600204 Loss with all heads enabled
 # Cross entropy loss: 2.805475741624832 Loss with head 1 disabled
@@ -90,6 +88,15 @@ print("Cross entropy loss:", sum(losses)/len(losses))
 # Cross entropy loss: 2.8077731877565384
 
 """
+# Smeared key
+
+Embedding circuit copy metric: (-0.9998577+0j)   
+Head 1 Copy metric:  (-0.71228284+2.4907904e-16j)
+Head 2 Copy metric:  (0.99999994+0j)
+Head 3 Copy metric:  (1.0000001+1.0977872e-16j)  
+Head 4 Copy metric:  (-0.856813-7.7495547e-16j)  
+
+
 state_dict = model.state_dict()
 
 num_heads = 4
@@ -112,8 +119,9 @@ embedding_circuit = embedding_circuit.detach().numpy()
 
 eigenvalues, eigenvectors = np.linalg.eig(embedding_circuit)
 print("Embedding circuit copy metric:", copy_metric(eigenvalues))
-print("Embedding circuit average magnitude:", average_magnitude(eigenvalues))
+#print("Embedding circuit average magnitude:", average_magnitude(eigenvalues))
 
+circuits = []
 for i in range(4):
     v_head1 = W_V[:, i*d_k:(i+1)*d_k]
 
@@ -122,17 +130,25 @@ for i in range(4):
 
     OV_circuit1 = W_E @ v_head1 @ o_head1 @ W_U
     OV_circuit1 = OV_circuit1.detach().numpy()
+    circuits.append(OV_circuit1)
 
 
     eigenvalues, eigenvectors = np.linalg.eig(OV_circuit1)
 
     print(f"Head {i+1} Copy metric: ", copy_metric(eigenvalues))
-    print(f"Head {i+1} Average magnitude: ", average_magnitude(eigenvalues))
+    #print(f"Head {i+1} Average magnitude: ", average_magnitude(eigenvalues))
 
     eigenvectors = eigenvectors.real
     eigenvectors = [v/np.linalg.norm(v) for v in eigenvectors]
+    #print(f"Head {i+1} Eigenvectors:", eigenvectors)
 
     #print("Eigenvalues: ", eigenvectors)
 #print([(v**2).sum() for v in eigenvectors])
+
+#circuit = sum(circuits)
+
+#eigenvalues, eigenvectors = np.linalg.eig(circuit)
+
+#print("Copy metric: ", copy_metric(eigenvalues))
 
 """

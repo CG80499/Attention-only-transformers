@@ -57,7 +57,8 @@ def plot_attention(weights, head_number):
     ax.grid(which="minor")
     ax.tick_params(which="minor", size=0)
 
-    plt.show()
+    #plt.show()
+    plt.savefig('images/images_smeared_head4.png', bbox_inches='tight')
 
 def attention(K, Q, V, mask):
     # K, Q have shape (batch_size, n_heads, seq_len, d_k)
@@ -68,6 +69,7 @@ def attention(K, Q, V, mask):
     K, Q = K + positional_embeddings, Q + positional_embeddings # Added after multiplication by W_k, W_q to avoid putting positional embeddings in the residual stream. 
     scores = torch.matmul(Q, K.transpose(2, 3)) / d_k**0.5 + mask
     weights = torch.softmax(scores, dim=-1)
+    plot_attention(weights, 3) # Plot attention weights for the first head.
     return torch.matmul(weights, V)
 
 class Embedding(torch.nn.Module):
@@ -84,7 +86,7 @@ class Embedding(torch.nn.Module):
 
 class FudgedLayerNorm(torch.nn.Module):
 
-    def __init__(self, seq_len, d_model, eps=1e-6, alpha=0.999):
+    def __init__(self, seq_len, d_model, eps=1e-6, alpha=0.99):
         super().__init__()
         self.eps = eps
         self.gamma = torch.nn.Parameter(torch.ones(d_model))
@@ -141,8 +143,8 @@ class DecoderLayer(torch.nn.Module):
         # Q, K, V have shape (batch_size, seq_len, n_heads, d_k)
         Q, K, V = Q.transpose(1, 2), K.transpose(1, 2), V.transpose(1, 2)
         # Q and K have shape (batch_size, n_heads, seq_len, d_k) and V has shape (batch_size, n_heads, seq_len, d_v)
-        # Apply smeared query if used.
-        Q = self.smear(Q)
+        # Apply smeared key if used.
+        K = self.smear(K)
         multi_head_attention = attention(K, Q, V, self.mask)
         # multi_head_attention has shape (batch_size, n_heads, seq_len, d_v)
         multi_head_attention = multi_head_attention.transpose(1, 2).contiguous()
@@ -244,9 +246,9 @@ if __name__ == "__main__":
         seq_len=24,
         n_layers=1,
         use_layer_norm=False,
-        use_smear=False,
+        use_smear=True,
     )
-    folder = "checkpoints/one_layer_transformer"
+    folder = "checkpoints/one_layer_smeared_key"
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1.0)
     loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
