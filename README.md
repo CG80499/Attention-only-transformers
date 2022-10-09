@@ -2,14 +2,14 @@
 
 I recently interested became in Anthropic's [work] (https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html) on interpretability. Particularly the sudden emergence of induction heads when you go from 1 to 2-layer transformers. 
 
-## The task
+## Task
 
 Predict a sequence of 24 letters where the sequence is made up of 4 different blocks of 6 letters. 
 Example: ABCDEFABCDEFABCDEFABCDEF
 
 As a reminder, induction heads find the last occurrence of the current token and then predict that the pattern occurs again. So induction should be able to solve this task. However, in 1-layer transformers the key matrix is linearly dependent on the input matrix hence the model can't find the last occurrence of the current token.
 
-## The model
+##  Model
 
 I used a simplified version of the decoder-only transformer architecture.
 
@@ -33,31 +33,31 @@ The model was trained on randomly generated data.
 
 ## Results
 
-# 1-layer model without smeared keys
+### 1-layer model without smeared keys
 
 Below are some example of model completions. 
 
-Prompt: ABCDEF
-Completion: ECECECECECECECECEC
-Correct completion: ABCDEFABCDEFABCDEF
-
-Prompt: ABCDEFABCDEF
-Completion: CFCFCFCFCFCF
-Correct completion: ABCDEFABCDEF
-
-Prompt: XYZRSTXYZRST
-Completion: TSTSZSTSTSZST
-Correct completion: XYZRSTXYZRST
-
-Out of distribution example.
-
-Prompt: ABCDEFXYZRST
-Completion: FEFEFEFEFEFE
-Correct completion: -
-
-Prompt: QWERTYXYZRST
-Completion: YTYTYTYTYTYT
-Correct completion: -
+Prompt: ABCDEF<br />
+Completion: ECECECECECECECECEC<br />
+Correct completion: ABCDEFABCDEFABCDEF<br />
+<br />
+Prompt: ABCDEFABCDEF<br />
+Completion: CFCFCFCFCFCF<br />
+Correct completion: ABCDEFABCDEF<br />
+<br />
+Prompt: XYZRSTXYZRST<br />
+Completion: TSTSZSTSTSZST<br />
+Correct completion: XYZRSTXYZRST<br />
+<br />
+Out of distribution example.<br />
+<br />
+Prompt: ABCDEFXYZRST<br />
+Completion: FEFEFEFEFEFE<br />
+Correct completion: -<br />
+<br />
+Prompt: QWERTYXYZRST<br />
+Completion: YTYTYTYTYTYT<br />
+Correct completion: -<br />
 
 # Observations
 The model:
@@ -72,10 +72,10 @@ As discussed in above, the one-layer model fails because it can't use K-composit
 Let's try looking the eigenvalues of the OV circuits in heads 1, 2, 3 and 4. Positive eigenvalues indicate copying behaviour. Recall that k is eigenvalue of M if and only if Mv = kv for some vector v. If k > 0 this implies that probability of token(or set of tokens) has increased. Note tokens are initiall encoded as one-hot vectors\*.
 
 To measure how positive the eigenvalues we will look at sum k/|k| over the eigenvalues. 
-Head 1: 0.6860927
-Head 2: 0.85695416
-Head 3: 0.98481447
-Head 4: 0.5779195
+Head 1: 0.6860927<br />
+Head 2: 0.85695416<br />
+Head 3: 0.98481447<br />
+Head 4: 0.5779195<br />
 
 This indicates that head 3 is almost entirely dedicated to copying behaviour and provides some evidence for the second observation. The other heads also have some copying behaviour but it is less convincing.
 
