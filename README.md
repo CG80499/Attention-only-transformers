@@ -91,7 +91,7 @@ Head 4:<br />
 
 As you can see, most of the attention is on the current token and a couple of tokens before it. The attention scores are also broadly similar across heads.
 
-Let's do an approximation and say that the attention matrices are the same for all heads. So we can factor out the attention weights and consider the sum of the OV circuits.
+Let's approximate and say that the attention matrices are the same for all heads. So we can factor out the attention weights and consider the sum of the OV circuits.
 
 Then let's look at the eigenvalues of the sum of the OV circuits.
 
