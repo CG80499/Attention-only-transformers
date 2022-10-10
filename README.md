@@ -110,7 +110,7 @@ Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
 
 ### 1-layer model with smeared keys
 
-What are smeared keys?
+What are smeared keys?<br />
 Essentially each key becomes the weighted average of the current key and the previous one. The exact weighting is learned during training. 
 
 How does this help?
@@ -157,7 +157,8 @@ Head 2: 1.0<br />
 Head 3: 1.0<br />
 Head 4: -0.856813<br />
 
-The direct path has all negative values which explain the second observation in the same way as before. Heads 2 and 3 seem to copy heads whereas 1 and 4 looks like "anti-copying" heads. 
+
+The eigenvalues of the direct path are almost all negative explaining the first observation in the same as before. Heads 2 and 3 seem to copy heads whereas 1 and 4 looks like "anti-copying" heads. 
 
 Below are the attention patterns for heads 1 and 2(3 and 4 are similar).<br />
 
@@ -168,4 +169,16 @@ Head 2:<br />
 ![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_smeared_head2.png)
 
 <br />
-From the second image, we can see that heads 2 and 3 attend to the tokens 5 back from the current token. Corresponding to the token that should be predicted.
+From the second image, we can see that heads 2 and 3 attend to the tokens 5 back from the current token. Corresponding to the token that should be predicted. Heads 1 and 4 attend to the current letter and the few letters prior. Heads 1 and 4 seem to implement a more advanced version of the direct path algorithm by reducing the last couple of tokens. It is also interesting that 2-layer transformers seem to perform worse than the 1-layer transformer with smeared keys. 
+
+# Conclusion
+
+Algorithm 1)
+- Copy the last ~3 letters (Heads)
+- Don't repeat the same letter twice in a row (Direct path)
+
+Algorithm 2)
+ - Copy the letter 5 back from the current letter (Heads 2 and 3)
+ - Don't repeat any of the ~3 previous letters (Heads 1, 4 and the direct path)
+
+In future, I would like to deduce more about the attention matrix directly from the weights rather via observational methods. The model was trained and tested on just (256+64)*10000/26^6 = 1.04% of possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. 
