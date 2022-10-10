@@ -89,7 +89,7 @@ Head 3:<br />
 Head 4:<br />
 ![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_head4.png)<br />
 
-As you can see, most of the attention is on the current token and the couple of tokens before it. The attentions scores are also broadly similar across heads.
+As you can see, most of the attention is on the current token and a couple of tokens before it. The attention scores are also broadly similar across heads.
 
 Let's do an approximation and say that the attention scores are the same for all heads. So we can factor out the attention weights and consider the sum of the OV circuits.
 
@@ -99,7 +99,7 @@ Sum of OV circuits: 0.9997909<br />
 
 This is very close to 1.0(meaning just copying behaviour) so the model is just copying the past couple of tokens. This would explain the third observation.
 
-What about the "direct path" (the embedding matrix followed by the unembedding matrix)? Usually this part of the network learns simple bigram statistics (like "Obama" follows "Barack"). Let's the sum k/|k| of the eigenvalues of the direct path.<br />
+What about the "direct path" (the embedding matrix followed by the unembedding matrix)? Usually, this part of the network learns simple bigram statistics (like "Obama" follows "Barack"). Let's the sum k/|k| of the eigenvalues of the direct path.<br />
 
 Direct path: -0.9995849<br />
 
@@ -116,7 +116,7 @@ Essentially each key becomes the weighted average of the current key and the pre
 How does this help?
 
 This wasn't obvious to me at first. But let's think of the query matrix as a set of padlocks. Where q\*k("*" is the dot product) is how well the key fits the padlock. 
-Consider the sequence ABCDEFABCDEFABCDEFABCDEF. In this example the "B" key would look at bit like the "A" key. Because query is linearly dependent on "A" it follows that all the "B" positions can have a high attention score. So the model can find the last occurrence of the current token.
+Consider the sequence ABCDEFABCDEFABCDEFABCDEF. In this example, the "B" key would look a bit like the "A" key. Because the query is linearly dependent on "A" it follows that all the "B" positions can have a high attention score. So the model can find the last occurrence of the current token.
 
 ### Examples
 
@@ -149,14 +149,15 @@ The model:
 
 # Analysis
 
-Again, let's look at the sign of the eigenvalues of the OV circuits and the direct path(Using k/|k| metric).
-Direct path: -0.9998577  
-Head 1: -0.71228284
-Head 2: 1.0
-Head 3: 1.0
-Head 4: -0.856813
+Again, let's look at the sign of the eigenvalues of the OV circuits and the direct path(Using k/|k| metric).<br />
 
-The direct path has all negative values which explains the second observation in the same way as before. Head 2 and 3 seem to copying heads whereas 1 and 4 look like "anti-copying" heads. 
+Direct path: -0.9998577<br />
+Head 1: -0.71228284<br />
+Head 2: 1.0<br />
+Head 3: 1.0<br />
+Head 4: -0.856813<br />
+
+The direct path has all negative values which explain the second observation in the same way as before. Heads 2 and 3 seem to copy heads whereas 1 and 4 looks like "anti-copying" heads. 
 
 Below are the attention patterns for heads 1 and 2(3 and 4 are similar).<br />
 
@@ -165,3 +166,6 @@ Head 1:<br />
 
 Head 2:<br />
 ![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_smeared_head2.png)
+
+<br />
+From the second image, we can see that heads 2 and 3 attend to the tokens 5 back from the current token. Corresponding to the token that should be predicted.
