@@ -9,7 +9,6 @@ Example: ABCDEFABCDEFABCDEFABCDEF
 
 So induction heads\* should be able to fully solve this task. However, in 1-layer transformers the key matrix is linearly dependent on the input matrix hence the model can't find the last occurrence of the current token.
 
-* "Induction heads is a circuit whose function is to look back over the sequence for previous instances of the current token (call it A), find the token that came after it last time (call it B), and then predict that the same completion will occur again." Quote from Anthropic's [work](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html).
 ##  Model
 
 I used a simplified version of the decoder-only transformer architecture.
@@ -106,9 +105,6 @@ Direct path: -0.9995849<br />
 
 This is very close to -1.0. This tells that for a given input token, the direct path reduces the probability of that token. So if "A" is the current token direct path will ensure that "A" is not predicted as the completion. This would explain the second observation. This makes sense because the probability of "A" following "A" is 1/26. The function of the direct path, in this case, is very different from in Anthropic's work.
 
-\** Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
-Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
-
 ### 1-layer model with smeared keys
 
 What are smeared keys?<br />
@@ -183,4 +179,10 @@ Algorithm 2)
  - Copy the letter 5 back from the current letter (Heads 2 and 3)
  - Don't repeat any of the ~3 previous letters(including the current letter) (Heads 1, 4 and the direct path)
 
-In future, I would like to deduce more about the attention matrix directly from the weights rather via observational methods. The model was trained and tested on just (256+64)*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important.
+In future, I would like to deduce more about the attention matrix directly from the weights rather via observational methods. The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important.
+
+\* "Induction heads is a circuit whose function is to look back over the sequence for previous instances of the current token (call it A), find the token that came after it last time (call it B), and then predict that the same completion will occur again." (Quote from https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html)
+
+\** Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
+Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
+
