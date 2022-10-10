@@ -288,7 +288,6 @@ if __name__ == "__main__":
         optimizer.step() 
         train_loss.append(loss.item())
 
-
         model.eval()
         one_hot_input_test = next(iter(test_loader))
         with torch.no_grad():
@@ -314,17 +313,3 @@ if __name__ == "__main__":
 
     plot_data(train_loss, test_loss, step+1)
     plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -10,14 +10,14 @@ model = Transformer(
     seq_len=24,
     n_layers=1,
     use_layer_norm=False,
-    use_smear=False,
+    use_smear=True,
 )
 
 model.eval()
 
 pattern = "QWERTYXYZRST"
 
-checkpoint_file = "checkpoints/one_layer_transformer/model_step_9984.pt"
+checkpoint_file = "checkpoints/one_layer_smeared_key/model_step_9984.pt"
 
 state_dict = torch.load(checkpoint_file, map_location=torch.device('cpu'))
 
