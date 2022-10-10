@@ -1,13 +1,13 @@
 # Attempting to reverse engineer one-layer transformers
 
-I recently interested became in Anthropic's [work](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html) on interpretability. Particularly the sudden emergence of induction heads when you go from 1 to 2-layer transformers. 
+I recently became interested became in Anthropic's [work](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html) on interpretability. Particularly the sudden emergence of induction heads when you go from 1 to 2-layer transformers. 
 
 ## Task
 
 Predict a sequence of 24 letters where the sequence is made up of 4 different blocks of 6 letters. 
 Example: ABCDEFABCDEFABCDEFABCDEF
 
-As a reminder, induction heads find the last occurrence of the current token and then predict that the pattern occurs again. So induction should be able to solve this task. However, in 1-layer transformers the key matrix is linearly dependent on the input matrix hence the model can't find the last occurrence of the current token.
+As a reminder, induction heads find the last occurrence of the current token and then predict that the pattern occurs again. So they should be able to fully solve this task. However, in 1-layer transformers the key matrix is linearly dependent on the input matrix hence the model can't find the last occurrence of the current token.
 
 ##  Model
 
@@ -61,7 +61,7 @@ Correct completion: -<br />
 
 ## Observations
 The model:
- - Clearly fails at this task
+ - Fails at this task
  - Never repeats the same token twice in a row
  - Copies seemingly random tokens from the prompt even in out of distribution examples
 
@@ -103,7 +103,7 @@ What about the "direct path" (the embedding matrix followed by the unembedding m
 
 Direct path: -0.9995849<br />
 
-This is very close to -1.0. This tells that for a given input token, the direct path reduces the probability of that token. So if "A" is the current token direct path will ensure that "A" is not predicted as the completion. This would explain the second observation. This makes sense because the probability of "A" following "A" is 1/26. The function of the direct path, in this case, is very different from that in Anthropic's work.
+This is very close to -1.0. This tells that for a given input token, the direct path reduces the probability of that token. So if "A" is the current token direct path will ensure that "A" is not predicted as the completion. This would explain the second observation. This makes sense because the probability of "A" following "A" is 1/26. The function of the direct path, in this case, is very different from in Anthropic's work.
 
 \* Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
 Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
@@ -169,7 +169,8 @@ Head 2:<br />
 ![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_smeared_head2.png)
 
 <br />
-From the second image, we can see that heads 2 and 3 attend to the tokens 5 back from the current token. Corresponding to the token that should be predicted. Heads 1 and 4 attend to the current letter and the few letters prior. Heads 1 and 4 seem to implement a more advanced version of the direct path algorithm by reducing the last couple of tokens. It is also interesting that 2-layer transformers seem to perform worse than the 1-layer transformer with smeared keys. 
+From the second image, we can see that heads 2 and 3 attend to the tokens 5 back from the current token. Corresponding to the token that should be predicted. Heads 1 and 4 attend to the current letter and the few letters prior. Heads 1 and 4 seem to implement a more advanced version of the direct path algorithm by reducing the probability of the last couple of tokens. These "anti-induction heads" are also different from  Anthropic's work which almost exclusively copies. It is also interesting that 2-layer transformers seem to perform worse than the 1-layer transformer with smeared keys. 
+
 
 # Conclusion
 
@@ -179,6 +180,6 @@ Algorithm 1)
 
 Algorithm 2)
  - Copy the letter 5 back from the current letter (Heads 2 and 3)
- - Don't repeat any of the ~3 previous letters (Heads 1, 4 and the direct path)
+ - Don't repeat any of the ~3 previous letters(including the current letter) (Heads 1, 4 and the direct path)
 
-In future, I would like to deduce more about the attention matrix directly from the weights rather via observational methods. The model was trained and tested on just (256+64)*10000/26^6 = 1.04% of possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. 
+In future, I would like to deduce more about the attention matrix directly from the weights rather via observational methods. The model was trained and tested on just (256+64)*10000/26^6 = 1.04% of possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. (Speculation) My guess is that anti-induction heads emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important.
