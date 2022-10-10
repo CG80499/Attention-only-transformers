@@ -7,7 +7,7 @@ I recently became interested in Anthropic's [work](https://transformer-circuits.
 Predict a sequence of 24 letters where the sequence is made up of 4 different blocks of 6 letters. 
 Example: ABCDEFABCDEFABCDEFABCDEF
 
-So induction heads\* should be able to fully solve this task. However, in 1-layer transformers the key matrix is linear function of the input tokens hence the model can't find the last occurrence of the current token.
+So induction heads\* should be able to fully solve this task. However, in 1-layer transformers the key matrix is a linear function of the input tokens hence the model can't find the last occurrence of the current token.
 
 ##  Model
 
@@ -91,7 +91,7 @@ Head 4:<br />
 
 As you can see, most of the attention is on the current token and a couple of tokens before it. The attention scores are also broadly similar across heads.
 
-Let's do an approximation and say that the attention scores are the same for all heads. So we can factor out the attention weights and consider the sum of the OV circuits.
+Let's do an approximation and say that the attention matrices are the same for all heads. So we can factor out the attention weights and consider the sum of the OV circuits.
 
 Then let's look at the eigenvalues of the sum of the OV circuits.
 
@@ -112,8 +112,8 @@ Essentially each key becomes the weighted average of the current key and the pre
 
 How does this help?
 
-This wasn't obvious to me at first. But let's think of the query matrix as a set of padlocks. Where q\*k("*" is the dot product) is how well the key fits the padlock. 
-Consider the sequence ABCDEFABCDEFABCDEFABCDEF. In this example, the "B" key would look a bit like the "A" key. Because the query is linearly dependent on "A" it follows that all the "B" positions can have a high attention score. So the model can find the last occurrence of the current token.
+This wasn't obvious to me at first. But let's think of the query matrix as a set of padlocks. Where q\*k("\*" is the dot product) is how well the key fits the padlock. 
+Consider the sequence ABCDEFABCDEFABCDEFABCDEF. In this example, the "B" key would look a bit like the "A" key. Because the query is a linear function of "A" it follows that all the "B" positions can have a high attention score. So the model can find the last occurrence of the current token.
 
 ### Examples
 
@@ -155,7 +155,7 @@ Head 3: 1.0<br />
 Head 4: -0.856813<br />
 
 
-The eigenvalues of the direct path are almost all negative explaining the first observation in the same as before. Heads 2 and 3 seem to copy heads whereas 1 and 4 looks like "anti-copying" heads. 
+The eigenvalues of the direct path are almost all negative explaining the first observation in the same way as before. Heads 2 and 3 seem to be copying heads whereas 1 and 4 looks like "anti-copying" heads. 
 
 Below are the attention patterns for heads 1 and 2(3 and 4 are similar).<br />
 
