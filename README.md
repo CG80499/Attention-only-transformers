@@ -16,7 +16,7 @@ I used a simplified version of the decoder-only transformer architecture.
 Simplifications:
 - No layer normalization
 - No MLP blocks
-- Sinusoidal positional encoding is added to Q and K before the attention is computed
+- Sinusoidal positional encoding is added to Q and K before the attention is computed(to avoid adding it to the residual stream)
 
 Hyperparameters:
 - 1-layer
@@ -78,6 +78,16 @@ Head 3: 0.98481447<br />
 Head 4: 0.5779195<br />
 
 This indicates that head 3 is almost entirely dedicated to copying behaviour and provides some evidence for the second observation. The other heads also have some copying behaviour but it is less convincing.
+Unfortunately, the attention mechanism is non-linear so don't have the same mathematical tools at our disposal so the evidence is weaker. Let's take a look avergae attention weights for heads 1, 2, 3 and 4 in random sample of data.
+
+Head 1:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_head1.png)<br />
+Head 2:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_head2.png)<br />
+Head 3:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_head3.png)<br />
+Head 4:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_head4.png)<br />
 
 
 \* Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
