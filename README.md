@@ -35,7 +35,7 @@ The model was trained on randomly generated data.
 
 ### 1-layer model without smeared keys
 
-Below are some example of model completions. 
+Below are some examples of model completions. 
 
 Prompt: ABCDEF<br />
 Completion: ECECECECECECECECEC<br />
@@ -67,11 +67,11 @@ The model:
 
 # Analysis
 
-As discussed in above, the one-layer model fails because it can't use K-composition to find the last occurrence of the current token. 
+As discussed above, the one-layer model fails because it can't use K-composition to find the last occurrence of the current token. 
 
-Let's try looking the eigenvalues of the OV circuits in heads 1, 2, 3 and 4. Positive eigenvalues indicate copying behaviour. Recall that k is eigenvalue of M if and only if Mv = kv for some vector v. If k > 0 this implies that probability of token(or set of tokens) has increased. Note tokens are initiall encoded as one-hot vectors\*.
+Let's try looking at the eigenvalues of the OV circuits in heads 1, 2, 3 and 4. Positive eigenvalues indicate copying behaviour. Recall that k is an eigenvalue of M if and only if Mv = kv for some vector v. If k > 0 this implies that the probability of the token(or set of tokens) has increased. Note tokens are initially encoded as one-hot vectors\*.
 
-To measure how positive the eigenvalues we will look at sum k/|k| over the eigenvalues. 
+To measure how positive the eigenvalues we will look at the sum k/|k| 
 Head 1: 0.6860927<br />
 Head 2: 0.85695416<br />
 Head 3: 0.98481447<br />
@@ -81,4 +81,4 @@ This indicates that head 3 is almost entirely dedicated to copying behaviour and
 
 
 \* Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
-Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under trasposition.
+Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
