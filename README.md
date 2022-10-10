@@ -7,8 +7,9 @@ I recently became interested in Anthropic's [work](https://transformer-circuits.
 Predict a sequence of 24 letters where the sequence is made up of 4 different blocks of 6 letters. 
 Example: ABCDEFABCDEFABCDEFABCDEF
 
-As a reminder, induction heads find the last occurrence of the current token and then predict that the pattern occurs again. So they should be able to fully solve this task. However, in 1-layer transformers the key matrix is linearly dependent on the input matrix hence the model can't find the last occurrence of the current token.
+So induction heads\* should be able to fully solve this task. However, in 1-layer transformers the key matrix is linearly dependent on the input matrix hence the model can't find the last occurrence of the current token.
 
+* "Induction heads is a circuit whose function is to look back over the sequence for previous instances of the current token (call it A), find the token that came after it last time (call it B), and then predict that the same completion will occur again." Quote from Anthropic's [work](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html).
 ##  Model
 
 I used a simplified version of the decoder-only transformer architecture.
@@ -69,7 +70,7 @@ The model:
 
 As discussed above, the one-layer model fails because it can't use K-composition to find the last occurrence of the current token. 
 
-Let's try looking at the eigenvalues of the OV circuits in heads 1, 2, 3 and 4. Positive eigenvalues indicate copying behaviour. Recall that k is an eigenvalue of M if and only if Mv = kv for some vector v. If k > 0 this implies that the probability of the token(or set of tokens) has increased. Note tokens are initially encoded as one-hot vectors\*.
+Let's try looking at the eigenvalues of the OV circuits in heads 1, 2, 3 and 4. Positive eigenvalues indicate copying behaviour. Recall that k is an eigenvalue of M if and only if Mv = kv for some vector v. If k > 0 this implies that the probability of the token(or set of tokens) has increased. Note tokens are initially encoded as one-hot vectors\**.
 
 To measure how positive the eigenvalues we will look at the sum k/|k|<br />
 Head 1: 0.6860927<br />
@@ -105,7 +106,7 @@ Direct path: -0.9995849<br />
 
 This is very close to -1.0. This tells that for a given input token, the direct path reduces the probability of that token. So if "A" is the current token direct path will ensure that "A" is not predicted as the completion. This would explain the second observation. This makes sense because the probability of "A" following "A" is 1/26. The function of the direct path, in this case, is very different from in Anthropic's work.
 
-\* Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
+\** Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
 Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
 
 ### 1-layer model with smeared keys
