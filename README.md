@@ -7,7 +7,7 @@ I recently became interested in Anthropic's [work](https://transformer-circuits.
 Predict a sequence of 24 letters where the sequence is made up of 4 different blocks of 6 letters. 
 Example: ABCDEFABCDEFABCDEFABCDEF
 
-So induction heads\* should be able to fully solve this task. However, in 1-layer transformers the key matrix is linearly dependent on the input matrix hence the model can't find the last occurrence of the current token.
+So induction heads\* should be able to fully solve this task. However, in 1-layer transformers the key matrix is linear function of the input tokens hence the model can't find the last occurrence of the current token.
 
 ##  Model
 
