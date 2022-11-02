@@ -77,8 +77,8 @@ Head 2: 0.85695416<br />
 Head 3: 0.98481447<br />
 Head 4: 0.5779195<br />
 
-This indicates that head 3 is almost entirely dedicated to copying behaviour and provides some evidence for the second observation. The other heads also have some copying behaviour but it is less convincing.
-Unfortunately, the attention mechanism is non-linear so don't have the same mathematical tools at our disposal so the evidence is weaker. Let's take a look at the average attention weights for heads 1, 2, 3 and 4 in a random sample of data.
+This indicates that head 3 is almost entirely dedicated to copying behaviour and provides some evidence for the third observation. The other heads also have some copying behaviour but it is less convincing.
+Unfortunately, the attention mechanism is non-linear so we'll use observational evidence. Let's take a look at the average attention weights for heads 1, 2, 3 and 4 in a random sample of data.
 
 Head 1:<br />
 ![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_head1.png)<br />
@@ -91,7 +91,7 @@ Head 4:<br />
 
 As you can see, most of the attention is on the current token and a couple of tokens before it. The attention scores are also broadly similar across heads.
 
-Let's do an approximation and say that the attention matrices are the same for all heads. So we can factor out the attention weights and consider the sum of the OV circuits.
+Let's approximate and say that the attention matrices are the same for all heads. So we can factor out the attention weights and consider the sum of the OV circuits.
 
 Then let's look at the eigenvalues of the sum of the OV circuits.
 
