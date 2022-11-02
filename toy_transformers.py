@@ -1,6 +1,6 @@
 import json
 import matplotlib.pyplot as plt
-from rotary_embeddings import sinusoidal_embeddings
+from positional_embeddings import sinusoidal_embeddings
 import torch
 import string
 import random
