@@ -52,7 +52,7 @@ Prompt: XYZRSTXYZRST<br />
 Completion: TSTSZSTSTSZST<br />
 Correct completion: XYZRSTXYZRST<br />
 <br />
-Out of distribution example.<br />
+out-of-distribution example.<br />
 <br />
 Prompt: ABCDEFXYZRST<br />
 Completion: FEFEFEFEFEFE<br />
@@ -66,7 +66,7 @@ Correct completion: N/A<br />
 The model:
  - Fails at this task
  - Never repeats the same token twice in a row
- - Copies seemingly random tokens from the prompt even in out of distribution examples
+ - Copies seemingly random tokens from the prompt even in out-of-distribution examples
 
 # Analysis
 
@@ -132,7 +132,7 @@ Prompt: XYZRSTXYZRST<br />
 Completion: XYZRSTXYZRST<br />
 Correct completion: XYZRSTXYZRST<br />
 <br />
-Out of distribution example.<br />
+out-of-distribution example.<br />
 <br />
 Prompt: ABCDEFXYZRST<br />
 Completion: FXYZRSTFXYZR<br />
@@ -145,7 +145,7 @@ Correct completion: N/A<br />
 ## Observations
 The model:
  - Correctly completes the sequences when the prompt is 12 letters long 
- - Never repeats the same token twice in a row even in out of distribution examples
+ - Never repeats the same token twice in a row even in out-of-distribution examples
 
 # Analysis
 
@@ -190,7 +190,7 @@ Completion: ABABABABABAB <br />
 Correct completion: AAABBBAAABBB<br />
 <br />
 
-Out of distribution example.<br />
+out-of-distribution example.<br />
 
 Prompt: ABCXYZABCDEF<br />
 Completion: ABCXYZABCYYZ<br />
@@ -318,7 +318,7 @@ Algorithm 3) Two-layer transformer
     - Copy the last ~3 logits (Heads in layer 2) because the logits come from layer 1 this stop the last ~4-6 letters from being repeated
 - "Weakly" copy the first occurrence of the next letter (Heads in layer 2 using K-composition with head 2 in layer 1)
 
-The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important. Also of note is that 1-layer smeared key models have 2 copying and 2 anti-copying heads whereas 2-layer models have 1-layer for copying and another for anti-copying. 
+The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out-of-distribution examples. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important. Also of note is that 1-layer smeared key models have 2 copying and 2 anti-copying heads whereas 2-layer models have 1-layer for copying and another for anti-copying. 
 
 
 \* "Induction heads is a circuit whose function is to look back over the sequence for previous instances of the current token (call it A), find the token that came after it last time (call it B), and then predict that the same completion will occur again." (Quote from https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html)

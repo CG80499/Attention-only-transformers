@@ -50,9 +50,9 @@ def greedy_decode(string, max_length=30):
             logits = model(input).softmax(dim=-1)
     return string
 
-print(greedy_decode(pattern, 24))
-print((pattern*(24//6+1))[:24])
-"""
+# print(greedy_decode(pattern, 24))
+# print((pattern*(24//6+1))[:24])
+
 loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
 test_dataset = LetterDataset(6, 24)
 losses = []
@@ -63,13 +63,16 @@ for i in range(1):
 
     with torch.no_grad():
         pred_logits = model(one_hot_input_test)
+    
+    pred_logits = pred_logits[256:]
+    one_hot_input_test = one_hot_input_test[256:]
     loss = loss_fn(pred_logits[:, :-1, :].reshape(-1, 26), one_hot_input_test[:, 1:, :].reshape(-1, 26))
 
     losses.append(loss.item())
 
 print("Cross entropy loss:", sum(losses)/len(losses))
 
-"""
+
 # PQRSTWPQRSTWTQSWQWWQSWQW With head 2
 # PQRSTWPQRSTWOQSWQWWQSWQS Without head 2
 # PQRSTWPQRSTWPQRSTWPQRSTW

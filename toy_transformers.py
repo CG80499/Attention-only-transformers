@@ -134,7 +134,11 @@ class DecoderLayer(torch.nn.Module):
         Q, K, V = self.W_q(X), self.W_k(X), self.W_v(X)
         # Q, K, V have shape (batch_size, seq_len, d_model)
         if self.layer_number == 1:
-            pass
+            mean_Q, mean_K = Q[:256].mean(dim=0).detach(), K[:256].mean(dim=0).detach()
+            # Fix K
+            #K[256:512, :, :] = mean_K
+            # Fix Q
+            Q[256:512, :, :] = mean_Q
             #Q = self.W_q(direct_path)
             #K = self.W_k(direct_path)
         Q, K, V = Q.view(-1, self.seq_len, self.n_heads, self.d_k), K.view(-1, self.seq_len, self.n_heads, self.d_k), V.view(-1, self.seq_len, self.n_heads, self.dv)
