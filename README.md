@@ -295,9 +295,9 @@ Head 2 layer 2:  (0.91947246-5.316366e-09j)<br />
 Head 3 layer 2:  (0.2616711-2.5381839e-08j)<br />
 Head 4 layer 2:  (0.32606995+0j)<br />
 
-All of these compositions between heads seem somewhat random except for the second head in layer 1 which gives overwhelmingly positive eigenvalues. Remember that the attention pattern of head 2 attends to the token *before* the current one. This means all the tokens are copied then only the letter before the current one is retained.
+All of these compositions between heads seem somewhat random except for the second head in layer 1 which gives overwhelmingly positive eigenvalues. Remember that the attention pattern of head 2 attends to the token *before* the current one. This means all the tokens are copied then only the letter before the current one is retained. 
 
-The effect is that the keys are shifted forward enabling the current token to find previous copies of the letter before it. This explains why removing K-composition removes the diagonal lines.
+The effect is that the keys are shifted forward enabling the current token to find previous copies of the letter before it. This explains why removing K-composition removes the diagonal lines. I don't this is the full story, however. Based on some ablation I found that Q-composition also plays an important role.
 
 Finally, we note that the second observation is explained by the direct path having negative eigenvalues(-0.9995 using the metric k/|k|).
 
