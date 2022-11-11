@@ -304,7 +304,7 @@ Finally, we note that the second observation is explained by the direct path hav
 # Conclusion
 
 Algorithm 1) One-layer transformer
-- Copy the last ~10 letters but favour letters close to the current(Heads)
+- Copy the last ~10 letters but favour letters close to the current one (Heads)
 - Don't repeat the same letter twice in a row (Direct path)
 
 Algorithm 2) One-layer transformer with smeared keys
