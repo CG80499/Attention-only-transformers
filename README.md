@@ -271,29 +271,29 @@ Where:
 
 Let's look at the eigenvalues of this term for all heads in layer 2 for each head in layer 1.
 
-Layer 1 head 1
-Head 1 layer 2:  (0.89388597-2.2985782e-09j)
-Head 2 layer 2:  (-0.6828638+0j)
-Head 3 layer 2:  (-0.92538565+3.692424e-11j)
-Head 4 layer 2:  (0.70200497+6.051526e-16j)
+Layer 1 head 1<br />
+Head 1 layer 2:  (0.89388597-2.2985782e-09j) <br />
+Head 2 layer 2:  (-0.6828638+0j) <br />
+Head 3 layer 2:  (-0.92538565+3.692424e-11j) <br />
+Head 4 layer 2:  (0.70200497+6.051526e-16j) <br />
 
-Layer 1 head 2
-Head 1 layer 2:  (0.99992883+6.803108e-15j)
-Head 2 layer 2:  (0.999999-4.2807158e-14j)
-Head 3 layer 2:  (0.99996066+0j)
-Head 4 layer 2:  (0.9999983-3.4481166e-13j)
+Layer 1 head 2<br />
+Head 1 layer 2:  (0.99992883+6.803108e-15j) <br />
+Head 2 layer 2:  (0.999999-4.2807158e-14j)<br />
+Head 3 layer 2:  (0.99996066+0j) <br />
+Head 4 layer 2:  (0.9999983-3.4481166e-13j)<br />
 
-Layer 1 head 3
-Head 1 layer 2:  (-0.3635076+0j)
-Head 2 layer 2:  (-0.63910097+0j)
-Head 3 layer 2:  (0.9450826-2.4281412e-09j)
-Head 4 layer 2:  (-0.4290508+5.9449112e-09j)
+Layer 1 head 3<br />
+Head 1 layer 2:  (-0.3635076+0j)<br />
+Head 2 layer 2:  (-0.63910097+0j)<br />
+Head 3 layer 2:  (0.9450826-2.4281412e-09j)<br />
+Head 4 layer 2:  (-0.4290508+5.9449112e-09j)<br />
 
-Layer 1 head 4
-Head 1 layer 2:  (-0.9442232+0j)
-Head 2 layer 2:  (0.91947246-5.316366e-09j)
-Head 3 layer 2:  (0.2616711-2.5381839e-08j)
-Head 4 layer 2:  (0.32606995+0j)
+Layer 1 head 4<br />
+Head 1 layer 2:  (-0.9442232+0j)<br />
+Head 2 layer 2:  (0.91947246-5.316366e-09j)<br />
+Head 3 layer 2:  (0.2616711-2.5381839e-08j)<br />
+Head 4 layer 2:  (0.32606995+0j)<br />
 
 All of these compositions between heads seem somewhat random except for the second head in layer 1 which gives overwhelmingly positive eigenvalues. Remember that the attention pattern of head 2 attends to the token *before* the current one. This means all the tokens are copied then only the letter before the current one is retained.
 
