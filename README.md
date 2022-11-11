@@ -1,4 +1,6 @@
-# Attempting to reverse engineer one-layer transformers
+# Reversing engineering attention-only transformers
+
+## One-layer transformers
 
 I recently became interested in Anthropic's [work](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html) on interpretability. Particularly the sudden emergence of induction heads when you go from 1 to 2-layer transformers. 
 
@@ -16,18 +18,19 @@ I used a simplified version of the decoder-only transformer architecture.
 Simplifications:
 - No layer normalization
 - No MLP blocks
+- No bias
 - Sinusoidal positional encoding is added to Q and K before the attention is computed(to avoid adding it to the residual stream)
 
 Hyperparameters:
-- 1-layer
-- 4-head
-- 24-token sequence
+- 1 layer
+- 4 heads
+- 24 token sequence
 - Inner dimension: 32
 - Learning rate: 0.001
 - Weight decay: 1.0
 - Steps: 10000
 - Batch size: 256
-- Total params: 26x32 + 4x32^2 + 26x32 = 5760
+- Total params: 26x32 + 4x32^2 + 26x32 = 5760 
 
 The model was trained on randomly generated data.
 
@@ -35,7 +38,7 @@ The model was trained on randomly generated data.
 
 ### 1-layer model without smeared keys
 
-Below are some examples of model completions. 
+Below are some examples of model completions using greedy decoding.
 
 Prompt: ABCDEF<br />
 Completion: ECECECECECECECECEC<br />
@@ -53,11 +56,11 @@ Out of distribution example.<br />
 <br />
 Prompt: ABCDEFXYZRST<br />
 Completion: FEFEFEFEFEFE<br />
-Correct completion: -<br />
+Correct completion: N/A<br />
 <br />
 Prompt: QWERTYXYZRST<br />
 Completion: YTYTYTYTYTYT<br />
-Correct completion: -<br />
+Correct completion: N/A<br />
 
 ## Observations
 The model:
@@ -97,7 +100,7 @@ Then let's look at the eigenvalues of the sum of the OV circuits.
 
 Sum of OV circuits: 0.9997909<br />
 
-This is very close to 1.0(meaning just copying behaviour) so the model is just copying the past couple of tokens. This would explain the third observation.
+This is very close to 1.0 so the model is just copying the past couple of tokens. This would explain the third observation.
 
 What about the "direct path" (the embedding matrix followed by the unembedding matrix)? Usually, this part of the network learns simple bigram statistics (like "Obama" follows "Barack"). Let's the sum k/|k| of the eigenvalues of the direct path.<br />
 
@@ -133,11 +136,11 @@ Out of distribution example.<br />
 <br />
 Prompt: ABCDEFXYZRST<br />
 Completion: FXYZRSTFXYZR<br />
-Correct completion: -<br />
+Correct completion: N/A<br />
 <br />
 Prompt: QWERTYXYZRST<br />
 Completion: YXYXYXYXYXYX<br />
-Correct completion: -<br />
+Correct completion: N/A<br />
 
 ## Observations
 The model:
@@ -185,4 +188,75 @@ In future, I would like to deduce more about the attention matrix directly from 
 
 \** Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
 Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
+
+## Two-layer transformers
+
+The hyperparameters and task are the same as before but now we have 26x32+4x32^2+4x32^2+26x32 = 9856 different weights.
+
+## Examples
+
+Below are some examples of model completions using greedy decoding.
+
+
+Prompt: ABCXYZABCDEF<br />
+Completion: ABCDEFABBCEF<br />
+Correct completion: ABCDEFABCDEF<br />
+<br />
+
+Prompt: AAABBBAAABBB <br />
+Completion: ABABABABABAB <br />
+Correct completion: AAABBBAAABBB<br />
+<br />
+
+Out of distribution example.<br />
+
+Prompt: ABCXYZABCDEF<br />
+Completion: ABCXYZABCYYZ<br />
+Correct completion: N/A<br />
+<br />
+
+## Observations
+
+The model:
+ - (Almost) Correctly completes the sequences when the prompt is 12 letters long 
+ - Never repeats the same token twice in a row even when this is the correct completion
+ - Copies first instance of a pattern in out of distribution examples 
+
+## Analysis
+
+#The second observation is explained by the direct path having negative eigenvalues(-0.9995 using the metric k/|k|).# 
+
+Let's start by looking at first layer attention patterns.
+
+Head 1:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/two_layer_head_1_layer_1.png)<br />
+Head 2:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/two_layer_head_2_layer_1.png)<br />
+Head 3:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/two_layer_head_3_layer_1.png)<br />
+Head 4:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/two_layer_head_4_layer_1.png)<br />
+
+Let's look again at the eigenvalues of the OV circuits and the direct path(Using k/|k| metric).<br />
+
+Layer 1:
+
+Head 1: -0.9999998-5.327597e-16j <br />
+Head 2: -0.94031566-2.6753054e-16j <br />
+Head 3: -0.9329939+0j <br />
+Head 4: -0.9999997+7.125459e-16j <br />
+
+Above I neglected to mention that the eigenvalues of the OV circuits are complex numbers but because the next letter always consists of one the previous 6 so the circuit amplifies/reduces past tokens rather than generating unseen tokens. Hence, the imaginary part is always near 0.
+
+So the first layer stops the model repeating the last ~3 letters(including the current letter). Notice that head 2 always attends to the previous letter.
+
+The second layer is a bit more complicated. Let's look at the attention patterns of the second layer.
+
+
+
+
+
+
+
+
 
