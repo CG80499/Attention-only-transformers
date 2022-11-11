@@ -171,24 +171,6 @@ Head 2:<br />
 <br />
 From the second image, we can see that heads 2 and 3 attend to the tokens 5 back from the current token. Corresponding to the token that should be predicted. Heads 1 and 4 attend to the current letter and the few letters prior. Heads 1 and 4 seem to implement a more advanced version of the direct path algorithm by reducing the probability of the last couple of tokens. These "anti-induction heads" are also different from  Anthropic's work which almost exclusively copies. It is also interesting that 2-layer transformers seem to perform worse than the 1-layer transformer with smeared keys. 
 
-
-# Conclusion
-
-Algorithm 1)
-- Copy the last ~3 letters (Heads)
-- Don't repeat the same letter twice in a row (Direct path)
-
-Algorithm 2)
- - Copy the letter 5 back from the current letter (Heads 2 and 3)
- - Don't repeat any of the ~3 previous letters(including the current letter) (Heads 1, 4 and the direct path)
-
-In future, I would like to deduce more about the attention matrix directly from the weights rather via observational methods. The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important.
-
-\* "Induction heads is a circuit whose function is to look back over the sequence for previous instances of the current token (call it A), find the token that came after it last time (call it B), and then predict that the same completion will occur again." (Quote from https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html)
-
-\** Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
-Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
-
 ## Two-layer transformers
 
 The hyperparameters and task are the same as before but now we have 26x32+4x32^2+4x32^2+26x32 = 9856 different weights.
@@ -220,13 +202,11 @@ Correct completion: N/A<br />
 The model:
  - (Almost) Correctly completes the sequences when the prompt is 12 letters long 
  - Never repeats the same token twice in a row even when this is the correct completion
- - Copies first instance of a pattern in out of distribution examples 
+ - Copies the first instance of a pattern in out-of-distribution examples 
 
 ## Analysis
 
-#The second observation is explained by the direct path having negative eigenvalues(-0.9995 using the metric k/|k|).# 
-
-Let's start by looking at first layer attention patterns.
+Let's start by looking at first-layer attention patterns.
 
 Head 1:<br />
 ![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/two_layer_head_1_layer_1.png)<br />
@@ -246,9 +226,9 @@ Head 2: -0.94031566-2.6753054e-16j <br />
 Head 3: -0.9329939+0j <br />
 Head 4: -0.9999997+7.125459e-16j <br />
 
-Above I neglected to mention that the eigenvalues of the OV circuits are complex numbers but because the next letter always consists of one the previous 6 so the circuit amplifies/reduces past tokens rather than generating unseen tokens. Hence, the imaginary part is always near 0.
+Above I neglected to mention that the eigenvalues of the OV circuits are complex numbers but because the next letter always consists of one of the previous 6 so the circuit amplifies/reduces past tokens rather than generating unseen tokens. Hence, the imaginary part is always near 0.
 
-So the first layer stops the model repeating the last ~3 letters(including the current letter). Notice that head 2 always attends to the previous letter.
+So the first layer stops the model from repeating the last ~3 letters(including the current letter). Notice that head 2 always attends to the previous letter(that's important for later).
 
 The second layer is a bit more complicated. Let's look at the attention patterns of the second layer.
 
@@ -257,7 +237,94 @@ Head 1:<br />
 
 (The other heads are similar)<br />
 
+Layer 2:
 
+Head 1: 0.9998253+1.1311128e-16j <br />
+Head 2: 0.9999484+0j <br />
+Head 3: 0.99989885+4.20817e-13j <br />
+Head 4: 0.99702746+1.5782087e-10j <br />
+
+So these heads are dedicated to copying.
+
+The nxn attentions look rather noisy but some deductions can be made. Firstly, most heads attend to the current letter and the few letters prior. But the tokens being copied are not the original ones but the outputs of layer 1 which have a reduced probability of being the last 3 tokens of that letter. This in effect means that the last ~4-6 letters will not be repeated. But look at the faint diagonal lines from positions 0-5 these tokens are unaffected by the anti-copying of the first layer and are "weakly" copied. This is why the model copies the first instance of a pattern in out-of-distribution examples.
+
+How does the model generate this diagonal pattern?
+
+Both the query and key matrix can be composed with heads in layer 1 to generate more interesting attention patterns. This is called K-composition and Q-composition respectively. 
+
+What happens if we disable K-composition?
+
+Layer 2 Head 1 without K-composition:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/layer2_head_1_no_K_composition.png)
+
+Now the faint diagonal lines are gone! And instead, it copies tokens unaffected by the first layers or just copies all the tokens.
+
+Let's look at the part of the circuit that takes heads from layer 1 and composes them with the query and key matrix.
+
+Specifically, the A * (W_E^T)(W_QK)(W_OV_1_2)(W_E) part of the circuit. This term is summed over all heads in layer 1. ("*" is elementwise multiplication)
+
+Where:
+- A is the attention pattern of head 2 from layer 1
+- W_QK is the product of the query and key matrix in the second layer heads
+- W_OV_1_2 is the OV circuit of head 2 in layer 1
+- W_E is the embedding matrix
+
+Let's look at the eigenvalues of this term for all heads in layer 2 for each head in layer 1.
+
+Layer 1 head 1
+Head 1 layer 2:  (0.89388597-2.2985782e-09j)
+Head 2 layer 2:  (-0.6828638+0j)
+Head 3 layer 2:  (-0.92538565+3.692424e-11j)
+Head 4 layer 2:  (0.70200497+6.051526e-16j)
+
+Layer 1 head 2
+Head 1 layer 2:  (0.99992883+6.803108e-15j)
+Head 2 layer 2:  (0.999999-4.2807158e-14j)
+Head 3 layer 2:  (0.99996066+0j)
+Head 4 layer 2:  (0.9999983-3.4481166e-13j)
+
+Layer 1 head 3
+Head 1 layer 2:  (-0.3635076+0j)
+Head 2 layer 2:  (-0.63910097+0j)
+Head 3 layer 2:  (0.9450826-2.4281412e-09j)
+Head 4 layer 2:  (-0.4290508+5.9449112e-09j)
+
+Layer 1 head 4
+Head 1 layer 2:  (-0.9442232+0j)
+Head 2 layer 2:  (0.91947246-5.316366e-09j)
+Head 3 layer 2:  (0.2616711-2.5381839e-08j)
+Head 4 layer 2:  (0.32606995+0j)
+
+All of these compositions between heads seem somewhat random except for the second head in layer 1 which gives overwhelmingly positive eigenvalues. Remember that the attention pattern of head 2 attends to the token *before* the current one. This means all the tokens are copied then only the letter before the current one is retained.
+
+The effect is that the keys are shifted forward enabling the current token to find previous copies of the letter before it. This explains why removing K-composition removes the diagonal lines.
+
+Finally, we note that the second observation is explained by the direct path having negative eigenvalues(-0.9995 using the metric k/|k|).
+
+# Conclusion
+
+Algorithm 1) One-layer transformer
+- Copy the last ~3 letters (Heads)
+- Don't repeat the same letter twice in a row (Direct path)
+
+Algorithm 2) One-layer transformer with smeared keys
+- Copy the letter 5 back from the current letter (Heads 2 and 3)
+- Don't repeat any of the ~3 previous letters(including the current letter) (Heads 1, 4 and the direct path)
+
+Algorithm 3) Two-layer transformer
+- Don't repeat the last ~4-6 letters
+    - Don't repeat the same letter twice in a row (Direct path)
+    - Don't repeat the last ~3 letters (Heads in layer 1)
+    - Copy the last ~3 logits (Heads in layer 2) because the logits come from layer 1 this stop the last ~4-6 letters from being repeated
+- "Weakly" copy the first occurrence of the next letter (Heads in layer 2 using K-composition with head 2 in layer 1)
+
+The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important. Also of note is that 1-layer smeared key models have 2 copying and 2 anti-copying heads whereas 2-layer models have 1-layer for copying and another for anti-copying. 
+
+
+\* "Induction heads is a circuit whose function is to look back over the sequence for previous instances of the current token (call it A), find the token that came after it last time (call it B), and then predict that the same completion will occur again." (Quote from https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html)
+
+\** Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
+Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
 
 
 
