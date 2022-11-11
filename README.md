@@ -252,6 +252,10 @@ So the first layer stops the model repeating the last ~3 letters(including the c
 
 The second layer is a bit more complicated. Let's look at the attention patterns of the second layer.
 
+Head 1:<br />
+![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/two_layer_head_1_layer_2.png)<br />
+
+(The other heads are similar)<br />
 
 
 
