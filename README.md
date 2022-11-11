@@ -295,16 +295,16 @@ Head 2 layer 2:  (0.91947246-5.316366e-09j)<br />
 Head 3 layer 2:  (0.2616711-2.5381839e-08j)<br />
 Head 4 layer 2:  (0.32606995+0j)<br />
 
-All of these compositions between heads seem somewhat random except for the second head in layer 1 which gives overwhelmingly positive eigenvalues. Remember that the attention pattern of head 2 attends to the token *before* the current one. This means all the tokens are copied then only the letter before the current one is retained.
+All of these compositions between heads seem somewhat random except for the second head in layer 1 which gives overwhelmingly positive eigenvalues. Remember that the attention pattern of head 2 attends to the token *before* the current one. This means all the tokens are copied then only the letter before the current one is retained. 
 
-The effect is that the keys are shifted forward enabling the current token to find previous copies of the letter before it. This explains why removing K-composition removes the diagonal lines.
+The effect is that the keys are shifted forward enabling the current token to find previous copies of the letter before it. This explains why removing K-composition removes the diagonal lines. I don't this is the full story, however. Based on some ablation I found that Q-composition also plays an important role.
 
 Finally, we note that the second observation is explained by the direct path having negative eigenvalues(-0.9995 using the metric k/|k|).
 
 # Conclusion
 
 Algorithm 1) One-layer transformer
-- Copy the last ~3 letters (Heads)
+- Copy the last ~10 letters but favour letters close to the current one (Heads)
 - Don't repeat the same letter twice in a row (Direct path)
 
 Algorithm 2) One-layer transformer with smeared keys
@@ -318,7 +318,7 @@ Algorithm 3) Two-layer transformer
     - Copy the last ~3 logits (Heads in layer 2) because the logits come from layer 1 this stop the last ~4-6 letters from being repeated
 - "Weakly" copy the first occurrence of the next letter (Heads in layer 2 using K-composition with head 2 in layer 1)
 
-The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out-of-distribution examples. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important. Also of note is that 1-layer smeared key models have 2 copying and 2 anti-copying heads whereas 2-layer models have 1-layer for copying and another for anti-copying. 
+The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out of distribution examples. We were also able to find failure modes in-distribution using mechanistic interpretability. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important. Also of note is that 1-layer smeared key models have 2 copying and 2 anti-copying heads whereas 2-layer models have 1-layer for copying and another for anti-copying. 
 
 
 \* "Induction heads is a circuit whose function is to look back over the sequence for previous instances of the current token (call it A), find the token that came after it last time (call it B), and then predict that the same completion will occur again." (Quote from https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html)
