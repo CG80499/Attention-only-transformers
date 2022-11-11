@@ -10,13 +10,6 @@ alphabet2index = {letter: index for index, letter in enumerate(alphabet)}
 
 LARGE_NUMBER = 1e9
 
-# Seeds
-
-SEED = 314159
-
-torch.manual_seed(SEED)
-random.seed(SEED)
-
 def create_sample(length, pattern_len=6):
     pattern = "".join([random.choice(alphabet) for _ in range(pattern_len)])
     return (pattern*(length//pattern_len+1))[:length] 
@@ -57,8 +50,9 @@ def plot_attention(weights, head_number):
     ax.grid(which="minor")
     ax.tick_params(which="minor", size=0)
 
-    #plt.show()
-    plt.savefig('images/images_smeared_head4.png', bbox_inches='tight')
+    plt.show()
+    #head_number += 1
+    #plt.savefig(f'images/two_layer_head_{head_number}_layer_2.png', bbox_inches='tight')
 
 def attention(K, Q, V, mask):
     # K, Q have shape (batch_size, n_heads, seq_len, d_k)
@@ -118,7 +112,7 @@ class Smear(torch.nn.Module):
 
 class DecoderLayer(torch.nn.Module):
     
-    def __init__(self, d_model, n_heads, seq_len, use_layer_norm=False, use_smear=False):
+    def __init__(self, d_model, n_heads, seq_len, use_layer_norm=False, use_smear=False, layer_number=-1):
         super().__init__()
         assert d_model % n_heads == 0, "d_model must be divisible by n_heads"
         self.d_k = self.dv = d_model // n_heads
@@ -132,12 +126,17 @@ class DecoderLayer(torch.nn.Module):
         self.W_o = torch.nn.Linear(d_model, d_model, bias=False)
         self.norm = torch.nn.LayerNorm(d_model) if use_layer_norm else lambda x: x
         self.smear = Smear(n_heads, seq_len) if use_smear else lambda x: x
+        self.layer_number = layer_number
 
     
-    def forward(self, X):
+    def forward(self, X, direct_path):
         # X has shape (batch_size, seq_len, d_model)
         Q, K, V = self.W_q(X), self.W_k(X), self.W_v(X)
         # Q, K, V have shape (batch_size, seq_len, d_model)
+        if self.layer_number == 1:
+            pass
+            #Q = self.W_q(direct_path)
+            #K = self.W_k(direct_path)
         Q, K, V = Q.view(-1, self.seq_len, self.n_heads, self.d_k), K.view(-1, self.seq_len, self.n_heads, self.d_k), V.view(-1, self.seq_len, self.n_heads, self.dv)
         # Q, K, V have shape (batch_size, seq_len, n_heads, d_k)
         Q, K, V = Q.transpose(1, 2), K.transpose(1, 2), V.transpose(1, 2)
@@ -163,7 +162,7 @@ class Transformer(torch.nn.Module):
         self.head = torch.nn.Linear(d_model, n_vocab, bias=False)
         self.layers = torch.nn.Sequential(
             self.embedding,
-            *[DecoderLayer(d_model, n_heads, seq_len, use_layer_norm, use_smear) for _ in range(n_layers)],
+            *[DecoderLayer(d_model, n_heads, seq_len, use_layer_norm, use_smear, i) for i in range(n_layers)],
             self.head,
         )
         self.hyperparameters = {
@@ -177,7 +176,12 @@ class Transformer(torch.nn.Module):
         }
     
     def forward(self, x):
-        return self.layers(x)
+        direct_path = self.embedding(x).clone()
+        #return self.layers(x, direct_path)
+        x = self.embedding(x)
+        for layer in self.layers[1:-1]:
+            x = layer(x, direct_path)
+        return self.head(x)
 
     def __str__(self):
         return "Transformer with hyperparameters: \n" + "\n".join([f"{k}: {v}" for k, v in self.hyperparameters.items()])
@@ -236,80 +240,3 @@ def plot_data(train_loss, test_loss, total_steps):
         plt.legend(loc="upper left")
     plt.show(block=False)
     plt.pause(0.3)
-
-if __name__ == "__main__":
-    model = Transformer(
-        n_vocab=26, 
-        d_model=32,
-        n_heads=4,
-        seq_len=24,
-        n_layers=2,
-        use_layer_norm=False,
-        use_smear=False,
-    )
-    folder = "checkpoints/two_layer_transformer"
-
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1.0)
-    loss_fn = torch.nn.CrossEntropyLoss(reduction="mean")
-
-    training_log = TrainingLog(
-        hyperparameters= model.hyperparameters | {"lr": 1e-3, "weight_decay": 1.0},
-        seed=SEED, 
-        out_file=f"{folder}/training_log.json",
-    )
-
-    train_dataset = LetterDataset(6, 24)
-    test_dataset = LetterDataset(6, 24)
-
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=256, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=True)
-
-    plt.title('Test vs Train Loss')
-    plt.xlabel('Steps')
-    plt.ylabel('Loss')
-
-    total_steps = 10000
-
-    train_loss = [3.3]
-    test_loss = []
-
-    for step in range(total_steps):
-
-        print(f"Step {step+1}/{total_steps} Loss: {mean(train_loss[-100:])}")
-        model.train()
-        one_hot_input_train = next(iter(train_loader))
-        pred_logits = model(one_hot_input_train)
-        # pred_logits has shape (batch_size, seq_len, n_vocab)
-        n_tokens = len(alphabet)
-
-        loss = loss_fn(pred_logits[:, :-1, :].reshape(-1, n_tokens), one_hot_input_train[:, 1:, :].reshape(-1, n_tokens)) 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step() 
-        train_loss.append(loss.item())
-
-        model.eval()
-        one_hot_input_test = next(iter(test_loader))
-        with torch.no_grad():
-            pred_logits = model(one_hot_input_test)
-        loss = loss_fn(pred_logits[:, :-1, :].reshape(-1, n_tokens), one_hot_input_test[:, 1:, :].reshape(-1, n_tokens))
-        per_token_loss = torch.nn.CrossEntropyLoss(reduction="none")(pred_logits[:, :-1, :].reshape(-1, n_tokens), one_hot_input_test[:, 1:, :].reshape(-1, n_tokens)).detach().reshape(-1, 23)
-
-        ICL_loss = (per_token_loss[:, -1]-per_token_loss[:, 0]).mean().item()
-        test_loss.append(loss.item())
-
-        training_log.add_step({
-            "step": step,
-            "train_loss": train_loss[-1],
-            "test_loss": test_loss[-1],
-            "per_token_loss": per_token_loss.mean(dim=0).tolist(),
-        })
-
-        plot_data(train_loss, test_loss, step+1)
-
-        if step % 256 == 0:
-            training_log.save()
-            torch.save(model.state_dict(), f"{folder}/model_step_{step}.pt")
-
-    plot_data(train_loss, test_loss, step+1)
-    plt.show()
