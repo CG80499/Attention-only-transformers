@@ -249,7 +249,7 @@ Head 4: 0.99702746+1.5782087e-10j <br />
 
 So these heads are dedicated to copying.
 
-The nxn attention matrix looks rather noisy but some deductions can be made. Firstly, most heads attend to the current letter and the few letters prior. But the tokens being copied are not the original ones but the outputs of layer 1 which have a reduced probability of being the last 3 tokens of that letter. This in effect means that the last ~4-6 letters will not be repeated. But look at the faint diagonal lines from positions 0-5 these tokens are unaffected by the anti-copying of the first layer and are "weakly" copied. This is why the model copies the first instance of a pattern in out-of-distribution examples.
+The nxn attention matrix looks rather noisy but some deductions can be made. Firstly, the heads attend to the current letter and the few letters prior or to a fixed set of positions. But the tokens being copied are not the original ones but the outputs of layer 1 which have a reduced probability of being the last 3 tokens of that letter. This in effect means that the last ~4-6 letters will not be repeated. But look at the faint diagonal lines from positions 0-5 these tokens are unaffected by the anti-copying of the first layer and are "weakly" copied. This is why the model copies the first instance of a pattern in out-of-distribution examples.
 
 How does the model generate this diagonal pattern?
 
