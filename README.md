@@ -318,7 +318,7 @@ Algorithm 3) Two-layer transformer
 - Don't repeat the last ~4-6 letters
     - Don't repeat the same letter twice in a row (Direct path)
     - Don't repeat the last ~3 letters (Heads in layer 1)
-    - Copy the last ~3 logits (Heads in layer 2) because the logits come from layer 1 this stop the last ~4-6 letters from being repeated
+    - Copy the last ~3 logits (Heads in layer 2) because the logits come from layer 1 this stops the last ~4-6 letters from being repeated
 - "Weakly" copy the first occurrence of the next letter (Heads in layer 2 using K-composition with head 2 in layer 1)
 
 The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all possible sequences. Yet we can be reasonably confident the (admittedly toy) network will behave as expected on in and out-of-distribution examples. We were also able to find failure modes in-distribution using mechanistic interpretability. (Speculation) My guess is that "anti-induction heads" emerge due to the ratio of heads to possible tokens being 4 to 6. Hence, the model can meaningfully improve by eliminating bad choices. In "trained on the internet" models, the ratio of heads to tokens is much smaller so eliminating bad choices is not very important. Also of note is that 1-layer smeared key models have 2 copying and 2 anti-copying heads whereas 2-layer models have 1-layer for copying and another for anti-copying. 
