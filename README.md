@@ -185,6 +185,9 @@ Completion: ABCDEFABBCEF<br />
 Correct completion: ABCDEFABCDEF<br />
 <br />
 
+
+Below is an example of using interpretability to find failure modes even in the training distribution!
+
 Prompt: AAABBBAAABBB <br />
 Completion: ABABABABABAB <br />
 Correct completion: AAABBBAAABBB<br />
