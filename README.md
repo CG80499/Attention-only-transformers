@@ -52,7 +52,7 @@ Prompt: XYZRSTXYZRST<br />
 Completion: TSTSZSTSTSZST<br />
 Correct completion: XYZRSTXYZRST<br />
 <br />
-out-of-distribution example.<br />
+Out of distribution example.<br />
 <br />
 Prompt: ABCDEFXYZRST<br />
 Completion: FEFEFEFEFEFE<br />
@@ -132,7 +132,7 @@ Prompt: XYZRSTXYZRST<br />
 Completion: XYZRSTXYZRST<br />
 Correct completion: XYZRSTXYZRST<br />
 <br />
-out-of-distribution example.<br />
+Out of distribution example.<br />
 <br />
 Prompt: ABCDEFXYZRST<br />
 Completion: FXYZRSTFXYZR<br />
@@ -190,7 +190,7 @@ Completion: ABABABABABAB <br />
 Correct completion: AAABBBAAABBB<br />
 <br />
 
-out-of-distribution example.<br />
+Out of distribution example.<br />
 
 Prompt: ABCXYZABCDEF<br />
 Completion: ABCXYZABCYYZ<br />
