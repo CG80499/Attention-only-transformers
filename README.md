@@ -260,7 +260,7 @@ What happens if we disable K-composition?
 Layer 2 Head 1 without K-composition:<br />
 ![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/layer2_head_1_no_K_composition.png)
 
-Now the faint diagonal lines are gone! And instead, it copies tokens unaffected by the first layers or just copies all the tokens.
+Now the faint diagonal lines are gone! And instead, it copies tokens at fixed positions or just copies all the tokens.
 
 Let's look at the part of the circuit that takes heads from layer 1 and composes them with the query and key matrix.
 
