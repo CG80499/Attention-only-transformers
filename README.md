@@ -314,7 +314,7 @@ Algorithm 2) One-layer transformer with smeared keys
 - Copy the letter 5 back from the current letter (Heads 2 and 3)
 - Don't repeat any of the ~3 previous letters(including the current letter) (Heads 1, 4 and the direct path)
 
-Algorithm 3) Two-layer transformer
+Algorithm 3) Two-layer transformer***
 - Don't repeat the last ~4-6 letters
     - Don't repeat the same letter twice in a row (Direct path)
     - Don't repeat the last ~3 letters (Heads in layer 1)
@@ -328,6 +328,8 @@ The model was trained and tested on just (256+64)\*10000/26^6 = 1.04% of all pos
 
 \** Why are all the matrices multiplied in the wrong order? Because the weights are transposed in the code.
 Note that (AB)^T = (B^T)(A^T) and eigenvalues do not change under transposition.
+
+\*** Potentially incomplete
 
 
 
