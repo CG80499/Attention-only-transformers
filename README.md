@@ -135,7 +135,7 @@ Correct completion: XYZRSTXYZRST<br />
 Out of distribution example.<br />
 <br />
 Prompt: ABCDEFXYZRST<br />
-Completion: FXYZRSTFXYZR<br />
+Completion(explained below): FXYZRSTFXYZR<br />
 Correct completion: N/A<br />
 <br />
 Prompt: QWERTYXYZRST<br />
@@ -169,7 +169,7 @@ Head 2:<br />
 ![image](https://github.com/CG80499/interpretability_one_layer_transformers/blob/master/images/images_smeared_head2.png)
 
 <br />
-From the second image, we can see that heads 2 and 3 attend to the tokens 5 back from the current token. Corresponding to the token that should be predicted. Heads 1 and 4 attend to the current letter and the few letters prior. Heads 1 and 4 seem to implement a more advanced version of the direct path algorithm by reducing the probability of the last couple of tokens. These "anti-induction heads" are also different from  Anthropic's work which almost exclusively copies. It is also interesting that 2-layer transformers seem to perform worse than the 1-layer transformer with smeared keys. 
+From the second image, we can see that heads 2 and 3 attend to the tokens 5 back from the current token. Corresponding to the token that should be predicted. Heads 1 and 4 attend to the current letter and the few letters prior. Heads 1 and 4 seem to implement a more advanced version of the direct path algorithm by reducing the probability of the last couple of tokens. These "anti-induction heads" are also different from  Anthropic's work which almost exclusively copies. It is also interesting that 2-layer transformers seem to perform worse than the 1-layer transformer with smeared keys. In addition the model seems use nearest copy of next token explaining the behaviour in the first out-of-distribution example.
 
 ## Two-layer transformers
 
